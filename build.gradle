@@ -140,6 +140,17 @@ dependencies {
     // For more info:
     // http://www.gradle.org/docs/current/userguide/artifact_dependencies_tutorial.html
     // http://www.gradle.org/docs/current/userguide/dependency_management.html
+
+    testImplementation platform('org.junit:junit-bom:5.14.4')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+// Puts Minecraft's libraries (Gson, logging) on the test classpath so plain JUnit tests can run against them
+legacyForge.addModdingDependenciesTo(sourceSets.test)
+
+tasks.named('test', Test).configure {
+    useJUnitPlatform()
 }
 
 // Uncomment the lines below if you wish to configure mixin. The mixin file should be named modid.mixins.json.
