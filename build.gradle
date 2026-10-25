@@ -19,6 +19,12 @@ group = mod_group_id
 
 repositories {
     mavenLocal()
+    // AStages (Modrinth) and FTB Teams (FTB maven), compile-only for the integration bridges
+    exclusiveContent {
+        forRepository { maven { url 'https://api.modrinth.com/maven' } }
+        filter { includeGroup 'maven.modrinth' }
+    }
+    maven { url 'https://maven.ftb.dev/releases' }
 }
 
 base {
@@ -140,6 +146,10 @@ dependencies {
     // For more info:
     // http://www.gradle.org/docs/current/userguide/artifact_dependencies_tutorial.html
     // http://www.gradle.org/docs/current/userguide/dependency_management.html
+
+    // Optional integrations; only touched from com.helianthus.stages.integration when the mod is loaded
+    modCompileOnly "maven.modrinth:astages:${astages_version}"
+    modCompileOnly "dev.ftb.mods:ftb-teams-forge:${ftb_teams_version}"
 
     testImplementation platform('org.junit:junit-bom:5.14.4')
     testImplementation 'org.junit.jupiter:junit-jupiter'
