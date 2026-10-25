@@ -1,6 +1,6 @@
 package com.helianthus.stages.command;
 
-import com.example.examplemod.ExampleMod;
+import com.helianthus.stages.HelianthusStages;
 import com.helianthus.stages.ceremony.CeremonyRewardHandler;
 import com.helianthus.stages.config.ConfigManager;
 import com.helianthus.stages.config.HouseConfig;
@@ -30,7 +30,7 @@ import java.util.function.Predicate;
  * /helianthus reload | status | force_unlock &lt;stageId&gt;. reload and force_unlock need operator permission;
  * status is read-only and open to everyone.
  */
-@Mod.EventBusSubscriber(modid = ExampleMod.MODID)
+@Mod.EventBusSubscriber(modid = HelianthusStages.MODID)
 public final class HelianthusCommand
 {
     public static final String ROOT = "helianthus";
