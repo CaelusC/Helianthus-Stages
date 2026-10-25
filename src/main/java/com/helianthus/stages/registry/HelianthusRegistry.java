@@ -1,6 +1,6 @@
 package com.helianthus.stages.registry;
 
-import com.example.examplemod.ExampleMod;
+import com.helianthus.stages.HelianthusStages;
 import com.helianthus.stages.block.HelianthusAltarBlock;
 import com.helianthus.stages.block.entity.HelianthusAltarBlockEntity;
 import net.minecraft.world.item.BlockItem;
@@ -18,10 +18,10 @@ public final class HelianthusRegistry
 {
     public static final String ALTAR_ID = "helianthus_altar";
 
-    public static final DeferredRegister<Block> BLOCKS = DeferredRegister.create(ForgeRegistries.BLOCKS, ExampleMod.MODID);
-    public static final DeferredRegister<Item> ITEMS = DeferredRegister.create(ForgeRegistries.ITEMS, ExampleMod.MODID);
+    public static final DeferredRegister<Block> BLOCKS = DeferredRegister.create(ForgeRegistries.BLOCKS, HelianthusStages.MODID);
+    public static final DeferredRegister<Item> ITEMS = DeferredRegister.create(ForgeRegistries.ITEMS, HelianthusStages.MODID);
     public static final DeferredRegister<BlockEntityType<?>> BLOCK_ENTITIES =
-            DeferredRegister.create(ForgeRegistries.BLOCK_ENTITY_TYPES, ExampleMod.MODID);
+            DeferredRegister.create(ForgeRegistries.BLOCK_ENTITY_TYPES, HelianthusStages.MODID);
 
     public static final RegistryObject<HelianthusAltarBlock> ALTAR_BLOCK = BLOCKS.register(ALTAR_ID,
             () -> new HelianthusAltarBlock(BlockBehaviour.Properties.of().mapColor(MapColor.GOLD).strength(3.5f).requiresCorrectToolForDrops()));
