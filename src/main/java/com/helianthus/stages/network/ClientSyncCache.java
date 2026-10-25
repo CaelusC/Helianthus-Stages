@@ -38,4 +38,9 @@ public final class ClientSyncCache
     {
         return ceremonies.get(altarPos);
     }
+
+    public static Map<BlockPos, SyncCeremonyPacket> getCeremonies()
+    {
+        return Map.copyOf(ceremonies);
+    }
 }
