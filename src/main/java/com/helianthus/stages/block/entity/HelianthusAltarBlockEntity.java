@@ -13,14 +13,21 @@ import com.helianthus.stages.state.HelianthusSavedData;
 import com.helianthus.stages.state.HouseReadinessState;
 import com.helianthus.stages.state.ParticipantRecord;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.core.particles.SimpleParticleType;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
+import net.minecraftforge.registries.ForgeRegistries;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -67,6 +74,7 @@ public class HelianthusAltarBlockEntity extends BlockEntity
                 presentByHouse(level, gate), gate);
         if (event == AltarCeremony.Event.NONE && ceremony.getPhase() == AltarCeremony.Phase.IDLE)
             return;
+        playEffects(level, event, gate);
 
         if (event == AltarCeremony.Event.COMPLETED)
         {
@@ -78,6 +86,53 @@ public class HelianthusAltarBlockEntity extends BlockEntity
             syncReadiness(data, sessionStage, requiredHouses);
         HelianthusNetwork.syncCeremony(level.getChunkAt(getBlockPos()), ceremonyPacket(level.getGameTime(), event, sessionStage, requiredHouses, gate));
         setChanged();
+    }
+
+    // Committing shows the active particle; the countdown adds the ceremony particle and tick sound; completion plays its sound
+    private void playEffects(ServerLevel level, AltarCeremony.Event event, GateConfig gate)
+    {
+        Vec3 center = Vec3.atCenterOf(getBlockPos());
+        if (event == AltarCeremony.Event.COMPLETED)
+        {
+            playSound(level, center, sound(gate.completionSound(), SoundEvents.UI_TOAST_CHALLENGE_COMPLETE));
+            return;
+        }
+        switch (ceremony.getPhase())
+        {
+            case COMMITTING -> spawnParticles(level, center, particle(gate.activeParticle(), ParticleTypes.PORTAL));
+            case CEREMONY ->
+            {
+                spawnParticles(level, center, particle(gate.ceremonyParticle(), ParticleTypes.ENCHANT));
+                playSound(level, center, sound(gate.ceremonyTickSound(), SoundEvents.ENCHANTMENT_TABLE_USE));
+            }
+            default -> {}
+        }
+    }
+
+    private static void spawnParticles(ServerLevel level, Vec3 center, SimpleParticleType particle)
+    {
+        level.sendParticles(particle, center.x, center.y + 0.5, center.z, 20, 0.75, 0.5, 0.75, 0.05);
+    }
+
+    private static void playSound(ServerLevel level, Vec3 center, SoundEvent sound)
+    {
+        level.playSound(null, center.x, center.y, center.z, sound, SoundSource.BLOCKS, 1.0F, 1.0F);
+    }
+
+    // Only parameterless particles can be spawned from a bare id; anything else falls back
+    private static SimpleParticleType particle(String id, SimpleParticleType fallback)
+    {
+        ResourceLocation location = ResourceLocation.tryParse(id);
+        return location != null && ForgeRegistries.PARTICLE_TYPES.getValue(location) instanceof SimpleParticleType type
+                ? type
+                : fallback;
+    }
+
+    private static SoundEvent sound(String id, SoundEvent fallback)
+    {
+        ResourceLocation location = ResourceLocation.tryParse(id);
+        SoundEvent sound = location == null ? null : ForgeRegistries.SOUND_EVENTS.getValue(location);
+        return sound == null ? fallback : sound;
     }
 
     // Completion reports the finished stage at 100%; otherwise progress runs only while the ceremony phase counts down
