@@ -1,6 +1,7 @@
 package com.example.examplemod;
 
 import com.helianthus.stages.config.ConfigManager;
+import com.helianthus.stages.network.HelianthusNetwork;
 import com.helianthus.stages.registry.HelianthusRegistry;
 import com.mojang.logging.LogUtils;
 import net.minecraft.client.Minecraft;
@@ -79,6 +80,8 @@ public class ExampleMod
         CREATIVE_MODE_TABS.register(modEventBus);
         // Register the altar block, its item and block entity type
         HelianthusRegistry.register(modEventBus);
+        // Register the server -> client sync channel and its packets
+        HelianthusNetwork.register();
 
         // Register ourselves for server and other game events we are interested in
         MinecraftForge.EVENT_BUS.register(this);
