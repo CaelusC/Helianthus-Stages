@@ -7,6 +7,8 @@ import com.helianthus.stages.config.HouseConfig;
 import com.helianthus.stages.config.StageConfig;
 import com.helianthus.stages.integration.AStagesBridge;
 import com.helianthus.stages.integration.TeamsBridge;
+import com.helianthus.stages.network.HelianthusNetwork;
+import com.helianthus.stages.network.SyncCeremonyPacket;
 import com.helianthus.stages.state.HelianthusSavedData;
 import com.helianthus.stages.state.HouseReadinessState;
 import com.helianthus.stages.state.ParticipantRecord;
@@ -23,6 +25,7 @@ import net.minecraft.world.phys.Vec3;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -69,10 +72,34 @@ public class HelianthusAltarBlockEntity extends BlockEntity
         {
             data.unlockStage(sessionStage, System.currentTimeMillis(), ceremony.getParticipants());
             rewards().reward(level.getServer(), sessionStage);
+            HelianthusNetwork.syncStagesToAll(level);
         }
         else if (sessionStage != null && !sessionStage.isEmpty())
             syncReadiness(data, sessionStage, requiredHouses);
+        HelianthusNetwork.syncCeremony(level.getChunkAt(getBlockPos()), ceremonyPacket(level.getGameTime(), event, sessionStage, requiredHouses, gate));
         setChanged();
+    }
+
+    // Completion reports the finished stage at 100%; otherwise progress runs only while the ceremony phase counts down
+    private SyncCeremonyPacket ceremonyPacket(long gameTime, AltarCeremony.Event event, String sessionStage,
+                                              List<String> requiredHouses, GateConfig gate)
+    {
+        if (event == AltarCeremony.Event.COMPLETED)
+        {
+            Map<String, Boolean> allReady = new LinkedHashMap<>();
+            requiredHouses.forEach(house -> allReady.put(house, true));
+            return new SyncCeremonyPacket(getBlockPos(), sessionStage, 100, allReady);
+        }
+        int progress = 0;
+        if (ceremony.getPhase() == AltarCeremony.Phase.CEREMONY)
+        {
+            long total = (long) gate.ceremonySeconds() * AltarCeremony.TICKS_PER_SECOND;
+            long remaining = Math.max(0, ceremony.getDeadline() - gameTime);
+            progress = (int) Math.min(100, (total - remaining) * 100 / total);
+        }
+        Map<String, Boolean> readiness = new LinkedHashMap<>();
+        requiredHouses.forEach(house -> readiness.put(house, ceremony.getReadyHouses().contains(house)));
+        return new SyncCeremonyPacket(getBlockPos(), ceremony.getStageId(), progress, readiness);
     }
 
     // First locked stage, by order, whose prerequisite is unlocked
