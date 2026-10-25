@@ -1,9 +1,11 @@
 package com.helianthus.stages.block.entity;
 
+import com.helianthus.stages.ceremony.CeremonyRewardHandler;
 import com.helianthus.stages.config.ConfigManager;
 import com.helianthus.stages.config.GateConfig;
 import com.helianthus.stages.config.HouseConfig;
 import com.helianthus.stages.config.StageConfig;
+import com.helianthus.stages.integration.AStagesBridge;
 import com.helianthus.stages.integration.TeamsBridge;
 import com.helianthus.stages.state.HelianthusSavedData;
 import com.helianthus.stages.state.HouseReadinessState;
@@ -33,6 +35,7 @@ public class HelianthusAltarBlockEntity extends BlockEntity
     public static final String READINESS_VIA = "altar";
 
     private static TeamsBridge teams;
+    private static CeremonyRewardHandler rewards;
 
     private final AltarCeremony ceremony = new AltarCeremony();
 
@@ -63,7 +66,10 @@ public class HelianthusAltarBlockEntity extends BlockEntity
             return;
 
         if (event == AltarCeremony.Event.COMPLETED)
+        {
             data.unlockStage(sessionStage, System.currentTimeMillis(), ceremony.getParticipants());
+            rewards().reward(level.getServer(), sessionStage);
+        }
         else if (sessionStage != null && !sessionStage.isEmpty())
             syncReadiness(data, sessionStage, requiredHouses);
         setChanged();
@@ -119,6 +125,13 @@ public class HelianthusAltarBlockEntity extends BlockEntity
         if (teams == null)
             teams = TeamsBridge.create(ConfigManager::getHouses);
         return teams;
+    }
+
+    private static CeremonyRewardHandler rewards()
+    {
+        if (rewards == null)
+            rewards = new CeremonyRewardHandler(AStagesBridge.create());
+        return rewards;
     }
 
     public AltarCeremony getCeremony()
