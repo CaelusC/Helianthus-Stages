@@ -178,6 +178,55 @@ class ConfigManagerTest
         assertEquals(List.of("houses.json: $[0].team: is required"), ConfigManager.getLastErrors());
     }
 
+    @Test
+    void parsesParticleAndSoundIdentifiers() throws IOException
+    {
+        writeAll(tempDir);
+        Files.writeString(tempDir.resolve(ConfigManager.GATE_FILE), GATE.replace("\"tickIntervalTicks\": 10", """
+                "tickIntervalTicks": 10,
+                  "ceremonyParticle": "minecraft:flame",
+                  "activeParticle": "end_rod",
+                  "completionSound": "minecraft:entity.player.levelup",
+                  "ceremonyTickSound": " minecraft:block.beacon.ambient "
+                """));
+
+        ConfigManager.load(tempDir);
+
+        assertEquals(List.of(), ConfigManager.getLastErrors());
+        GateConfig gate = ConfigManager.getGate();
+        assertEquals("minecraft:flame", gate.ceremonyParticle());
+        assertEquals("minecraft:end_rod", gate.activeParticle());
+        assertEquals("minecraft:entity.player.levelup", gate.completionSound());
+        assertEquals("minecraft:block.beacon.ambient", gate.ceremonyTickSound());
+    }
+
+    @Test
+    void malformedOrMissingParticleAndSoundFallBackToDefaults() throws IOException
+    {
+        writeAll(tempDir);
+        ConfigManager.load(tempDir);
+        GateConfig missing = ConfigManager.getGate();
+
+        Files.writeString(tempDir.resolve(ConfigManager.GATE_FILE), GATE.replace("\"tickIntervalTicks\": 10", """
+                "tickIntervalTicks": 10,
+                  "ceremonyParticle": "Not A Particle!",
+                  "activeParticle": "",
+                  "completionSound": "bad::sound",
+                  "ceremonyTickSound": null
+                """));
+        ConfigManager.load(tempDir);
+        GateConfig malformed = ConfigManager.getGate();
+
+        assertEquals(List.of(), ConfigManager.getLastErrors());
+        for (GateConfig gate : List.of(missing, malformed))
+        {
+            assertEquals(GateConfig.DEFAULT_CEREMONY_PARTICLE, gate.ceremonyParticle());
+            assertEquals(GateConfig.DEFAULT_ACTIVE_PARTICLE, gate.activeParticle());
+            assertEquals(GateConfig.DEFAULT_COMPLETION_SOUND, gate.completionSound());
+            assertEquals(GateConfig.DEFAULT_CEREMONY_TICK_SOUND, gate.ceremonyTickSound());
+        }
+    }
+
     private static void writeAll(Path dir) throws IOException
     {
         Files.writeString(dir.resolve(ConfigManager.HOUSES_FILE), HOUSES);

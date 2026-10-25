@@ -1,6 +1,6 @@
 package com.helianthus.stages.network;
 
-import com.example.examplemod.ExampleMod;
+import com.helianthus.stages.HelianthusStages;
 import com.helianthus.stages.state.HelianthusSavedData;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -26,7 +26,7 @@ public final class HelianthusNetwork
     public static final int SYNC_CEREMONY_ID = 1;
 
     public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
-            new ResourceLocation(ExampleMod.MODID, "main"),
+            new ResourceLocation(HelianthusStages.MODID, "main"),
             () -> PROTOCOL_VERSION, PROTOCOL_VERSION::equals, PROTOCOL_VERSION::equals);
 
     private HelianthusNetwork() {}
