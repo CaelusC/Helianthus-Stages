@@ -10,7 +10,7 @@ import net.minecraftforge.client.gui.overlay.ForgeGui;
 import net.minecraftforge.client.gui.overlay.IGuiOverlay;
 
 /**
- * Top-centre HUD showing the nearest active altar ceremony's stage, progress and house readiness.
+ * Top-centre HUD showing the nearest active altar ceremony's stage, progress and house readiness, or its quest seal.
  */
 public final class CeremonyOverlay implements IGuiOverlay
 {
@@ -43,6 +43,9 @@ public final class CeremonyOverlay implements IGuiOverlay
     {
         int centre = screenWidth / 2;
         graphics.drawCenteredString(font, data.title(), centre, TOP, TEXT_COLOR);
+        // A quest-sealed altar has no countdown to show
+        if (data.sealed())
+            return;
 
         int barLeft = centre - BAR_WIDTH / 2;
         int barTop = TOP + font.lineHeight + 2;

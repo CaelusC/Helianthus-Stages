@@ -14,7 +14,7 @@ import java.util.Optional;
 /**
  * Display-ready view of a synced ceremony, kept free of rendering code so it can be tested without a client.
  */
-public record CeremonyHudData(String title, int progressPercent, List<HouseStatus> houses)
+public record CeremonyHudData(String title, int progressPercent, List<HouseStatus> houses, boolean sealed)
 {
     public record HouseStatus(String name, boolean ready)
     {
@@ -46,6 +46,10 @@ public record CeremonyHudData(String title, int progressPercent, List<HouseStatu
 
     public static CeremonyHudData from(SyncCeremonyPacket ceremony, List<StageConfig> stages, List<HouseConfig> houses)
     {
+        if (!ceremony.sealedByQuest().isEmpty())
+            return new CeremonyHudData("[Altar Sealed: Complete Shared Quest '" + ceremony.sealedByQuest() + "' First]",
+                    0, List.of(), true);
+
         String stageName = stages.stream()
                 .filter(stage -> stage.id().equals(ceremony.stageId()))
                 .map(StageConfig::displayName)
@@ -64,7 +68,7 @@ public record CeremonyHudData(String title, int progressPercent, List<HouseStatu
                 .forEach(team -> statuses.add(new HouseStatus(team, readiness.get(team))));
 
         int progress = Math.max(0, Math.min(100, ceremony.progressPercent()));
-        return new CeremonyHudData("Ceremony in Progress: " + stageName, progress, List.copyOf(statuses));
+        return new CeremonyHudData("Ceremony in Progress: " + stageName, progress, List.copyOf(statuses), false);
     }
 
     public String readinessLine()

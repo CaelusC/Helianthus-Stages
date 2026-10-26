@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CeremonyHudDataTest
@@ -44,6 +45,19 @@ class CeremonyHudDataTest
         assertEquals("Ceremony in Progress: mystery", data.title());
         assertEquals(100, data.progressPercent());
         assertEquals("[green: READY]", data.readinessLine());
+    }
+
+    @Test
+    void sealedAltarShowsQuestMessageWithoutCountdown()
+    {
+        SyncCeremonyPacket packet = new SyncCeremonyPacket(BlockPos.ZERO, "master", 0, Map.of(), "shared_monopoly");
+
+        CeremonyHudData data = CeremonyHudData.from(packet, STAGES, HOUSES);
+
+        assertEquals("[Altar Sealed: Complete Shared Quest 'shared_monopoly' First]", data.title());
+        assertTrue(data.sealed());
+        assertEquals(0, data.progressPercent());
+        assertFalse(new CeremonyHudData("t", 0, List.of(), false).sealed());
     }
 
     @Test
