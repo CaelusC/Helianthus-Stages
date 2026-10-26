@@ -123,4 +123,19 @@ class AltarCeremonyTest
         loaded.load(new net.minecraft.nbt.CompoundTag());
         assertEquals(Phase.IDLE, loaded.getPhase());
     }
+
+    @Test
+    void unfulfilledQuestKeepsAltarFromStartingCeremony()
+    {
+        AltarCeremony idle = new AltarCeremony();
+        assertEquals(Event.NONE, idle.evaluate(0, STAGE, HOUSES, FULL, GATE, true));
+        assertEquals(Phase.IDLE, idle.getPhase());
+
+        AltarCeremony committing = new AltarCeremony();
+        assertEquals(Event.COMMIT_STARTED, committing.evaluate(0, STAGE, HOUSES, PARTIAL, GATE));
+        assertEquals(Event.NONE, committing.evaluate(20, STAGE, HOUSES, FULL, GATE, true));
+        assertEquals(Phase.COMMITTING, committing.getPhase());
+
+        assertEquals(Event.CEREMONY_STARTED, committing.evaluate(40, STAGE, HOUSES, FULL, GATE, false));
+    }
 }

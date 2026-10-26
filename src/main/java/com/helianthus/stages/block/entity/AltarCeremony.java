@@ -18,6 +18,7 @@ import java.util.TreeSet;
  * Ceremony state machine for one altar. Kept free of world access so it can be driven directly in tests.
  * IDLE -> COMMITTING (someone arrived) -> CEREMONY (every required house met quorum) -> back to IDLE on completion.
  * A commit timeout or a house dropping below quorum aborts into COOLDOWN, which returns to IDLE once it expires.
+ * While the stage is sealed by an unfulfilled shared quest no session starts and COMMITTING never advances to CEREMONY.
  */
 public final class AltarCeremony
 {
@@ -39,6 +40,12 @@ public final class AltarCeremony
     private final Set<String> readyHouses = new TreeSet<>();
     private final List<ParticipantRecord> participants = new ArrayList<>();
 
+    public Event evaluate(long gameTime, String stageId, Collection<String> requiredHouses,
+                          Map<String, List<ParticipantRecord>> presentByHouse, GateConfig gate)
+    {
+        return evaluate(gameTime, stageId, requiredHouses, presentByHouse, gate, false);
+    }
+
     /**
      * Advances the state machine by one evaluation.
      *
@@ -46,15 +53,16 @@ public final class AltarCeremony
      * @param stageId        stage the altar would attempt, or null when no stage is available
      * @param requiredHouses houses (team short names) that must all meet quorum
      * @param presentByHouse eligible players near the altar, grouped by house team short name
+     * @param sealed         true while the stage's required shared quest is unfulfilled
      */
     public Event evaluate(long gameTime, String stageId, Collection<String> requiredHouses,
-                          Map<String, List<ParticipantRecord>> presentByHouse, GateConfig gate)
+                          Map<String, List<ParticipantRecord>> presentByHouse, GateConfig gate, boolean sealed)
     {
         switch (phase)
         {
             case IDLE ->
             {
-                if (stageId == null || requiredHouses.isEmpty() || presentByHouse.values().stream().allMatch(List::isEmpty))
+                if (sealed || stageId == null || requiredHouses.isEmpty() || presentByHouse.values().stream().allMatch(List::isEmpty))
                     return Event.NONE;
                 phase = Phase.COMMITTING;
                 this.stageId = stageId;
@@ -67,7 +75,7 @@ public final class AltarCeremony
                 if (!this.stageId.equals(stageId))
                     return abort(gameTime, gate);
                 updateQuorum(requiredHouses, presentByHouse, gate);
-                if (readyHouses.containsAll(requiredHouses))
+                if (!sealed && readyHouses.containsAll(requiredHouses))
                 {
                     phase = Phase.CEREMONY;
                     deadline = gameTime + (long) gate.ceremonySeconds() * TICKS_PER_SECOND;
