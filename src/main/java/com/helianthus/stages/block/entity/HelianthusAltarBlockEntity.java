@@ -46,8 +46,11 @@ public class HelianthusAltarBlockEntity extends BlockEntity
 
     private static TeamsBridge teams;
     private static CeremonyRewardHandler rewards;
+    private static AStagesBridge stages;
 
     private final AltarCeremony ceremony = new AltarCeremony();
+    // Whether the last evaluation synced a sealed altar, so the seal is cleared on clients once lifted
+    private boolean syncedSealed;
 
     public HelianthusAltarBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state)
     {
@@ -69,11 +72,21 @@ public class HelianthusAltarBlockEntity extends BlockEntity
         String stageId = nextStage(data);
         // Readiness belongs to the stage of the running session, even if that session aborts this tick
         String sessionStage = ceremony.getPhase() == AltarCeremony.Phase.IDLE ? stageId : ceremony.getStageId();
+        String sealedQuest = sealedQuest(data, stageId);
 
         AltarCeremony.Event event = ceremony.evaluate(level.getGameTime(), stageId, requiredHouses,
-                presentByHouse(level, gate), gate);
-        if (event == AltarCeremony.Event.NONE && ceremony.getPhase() == AltarCeremony.Phase.IDLE)
+                presentByHouse(level, gate), gate, !sealedQuest.isEmpty());
+        boolean sealedIdle = !sealedQuest.isEmpty() && ceremony.getPhase() == AltarCeremony.Phase.IDLE;
+        if (sealedIdle)
+        {
+            syncedSealed = true;
+            HelianthusNetwork.syncCeremony(level.getChunkAt(getBlockPos()),
+                    new SyncCeremonyPacket(getBlockPos(), stageId, 0, Map.of(), sealedQuest));
             return;
+        }
+        if (event == AltarCeremony.Event.NONE && ceremony.getPhase() == AltarCeremony.Phase.IDLE && !syncedSealed)
+            return;
+        syncedSealed = false;
         playEffects(level, event, gate);
 
         if (event == AltarCeremony.Event.COMPLETED)
@@ -169,6 +182,19 @@ public class HelianthusAltarBlockEntity extends BlockEntity
                 .orElse(null);
     }
 
+    // The stage's required shared quest when it is unlocked neither in saved data nor as an AStages stage, else empty
+    private static String sealedQuest(HelianthusSavedData data, String stageId)
+    {
+        String quest = ConfigManager.getStages().stream()
+                .filter(stage -> stage.id().equals(stageId))
+                .map(StageConfig::requiresQuest)
+                .findFirst()
+                .orElse(null);
+        if (quest == null || quest.isEmpty() || data.getStage(quest).unlocked() || stages().serverHasStage(quest))
+            return "";
+        return quest;
+    }
+
     private Map<String, List<ParticipantRecord>> presentByHouse(ServerLevel level, GateConfig gate)
     {
         TeamsBridge bridge = teams();
@@ -212,8 +238,15 @@ public class HelianthusAltarBlockEntity extends BlockEntity
     private static CeremonyRewardHandler rewards()
     {
         if (rewards == null)
-            rewards = new CeremonyRewardHandler(AStagesBridge.create());
+            rewards = new CeremonyRewardHandler(stages());
         return rewards;
+    }
+
+    private static AStagesBridge stages()
+    {
+        if (stages == null)
+            stages = AStagesBridge.create();
+        return stages;
     }
 
     public AltarCeremony getCeremony()

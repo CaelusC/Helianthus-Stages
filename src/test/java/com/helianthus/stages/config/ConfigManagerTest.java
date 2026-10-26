@@ -227,6 +227,20 @@ class ConfigManagerTest
         }
     }
 
+    @Test
+    void parsesOptionalRequiresQuest() throws IOException
+    {
+        writeAll(tempDir);
+        Files.writeString(tempDir.resolve(ConfigManager.STAGES_FILE), STAGES.replace(
+                "\"requiresStage\": \"sun_novice\",", "\"requiresStage\": \"sun_novice\", \"requiresQuest\": \"shared_monopoly\","));
+
+        ConfigManager.load(tempDir);
+
+        assertEquals(List.of(), ConfigManager.getLastErrors());
+        assertNull(ConfigManager.getStages().get(0).requiresQuest());
+        assertEquals("shared_monopoly", ConfigManager.getStages().get(1).requiresQuest());
+    }
+
     private static void writeAll(Path dir) throws IOException
     {
         Files.writeString(dir.resolve(ConfigManager.HOUSES_FILE), HOUSES);
