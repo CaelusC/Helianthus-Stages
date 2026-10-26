@@ -42,6 +42,16 @@ class NetworkPacketTest
     }
 
     @Test
+    void sealedCeremonyRoundTrip()
+    {
+        SyncCeremonyPacket packet = new SyncCeremonyPacket(BlockPos.ZERO, "novice", 0, Map.of(), "shared_monopoly");
+        FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
+        packet.encode(buf);
+        assertEquals(packet, SyncCeremonyPacket.decode(buf));
+        assertEquals(0, buf.readableBytes());
+    }
+
+    @Test
     void idleCeremonyRoundTrip()
     {
         SyncCeremonyPacket packet = new SyncCeremonyPacket(BlockPos.ZERO, "", 0, Map.of());
