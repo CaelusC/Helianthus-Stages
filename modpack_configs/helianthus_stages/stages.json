@@ -1,0 +1,51 @@
+[
+  {
+    "id": "novice_tier",
+    "order": 0,
+    "displayName": "Novice",
+    "astagesStage": "novice_tier",
+    "messages": {
+      "unlockTitle": "{displayName} Tier",
+      "unlockSubtitle": "Novice spellcraft awakens",
+      "broadcast": "The houses have reached the {displayName} tier."
+    },
+    "onUnlockCommands": [
+      "playsound minecraft:ui.toast.challenge_complete master @a ~ ~ ~ 1 1",
+      "tellraw @a {\"text\":\"Novice tier unlocked.\",\"color\":\"green\"}"
+    ]
+  },
+  {
+    "id": "apprentice_tier",
+    "order": 1,
+    "displayName": "Apprentice",
+    "astagesStage": "apprentice_tier",
+    "requiresStage": "novice_tier",
+    "requiresQuest": "quest_apprentice_trial",
+    "messages": {
+      "unlockTitle": "{displayName} Tier",
+      "unlockSubtitle": "Gems and affixes stir",
+      "broadcast": "The houses have reached the {displayName} tier."
+    },
+    "onUnlockCommands": [
+      "playsound minecraft:entity.player.levelup master @a ~ ~ ~ 1 1",
+      "tellraw @a {\"text\":\"Apprentice tier unlocked.\",\"color\":\"aqua\"}"
+    ]
+  },
+  {
+    "id": "master_tier",
+    "order": 2,
+    "displayName": "Master",
+    "astagesStage": "master_tier",
+    "requiresStage": "apprentice_tier",
+    "requiresQuest": "quest_master_trial",
+    "messages": {
+      "unlockTitle": "{displayName} Tier",
+      "unlockSubtitle": "Archmage secrets revealed",
+      "broadcast": "The houses have reached the {displayName} tier."
+    },
+    "onUnlockCommands": [
+      "playsound minecraft:ui.toast.challenge_complete master @a ~ ~ ~ 1 0.8",
+      "tellraw @a {\"text\":\"Master tier unlocked.\",\"color\":\"gold\"}"
+    ]
+  }
+]
