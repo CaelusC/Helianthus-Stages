@@ -1,0 +1,14 @@
+{
+  "radius": 8.0,
+  "quorumPerHouse": 2,
+  "commitTimeoutSeconds": 30,
+  "ceremonySeconds": 15,
+  "abortCooldownSeconds": 60,
+  "requireSameDimension": true,
+  "allowedGameModes": ["survival", "adventure"],
+  "tickIntervalTicks": 20,
+  "ceremonyParticle": "minecraft:enchant",
+  "activeParticle": "minecraft:portal",
+  "completionSound": "minecraft:ui.toast.challenge_complete",
+  "ceremonyTickSound": "minecraft:block.enchantment_table.use"
+}

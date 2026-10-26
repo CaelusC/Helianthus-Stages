@@ -247,4 +247,25 @@ class ConfigManagerTest
         Files.writeString(dir.resolve(ConfigManager.GATE_FILE), GATE);
         Files.writeString(dir.resolve(ConfigManager.STAGES_FILE), STAGES);
     }
+
+    @Test
+    void modpackTemplatesPassValidation() throws IOException
+    {
+        Path templates = Path.of("modpack_configs", ConfigManager.DIRECTORY);
+        Path dir = tempDir.resolve(ConfigManager.DIRECTORY);
+        Files.createDirectories(dir);
+        for (String file : List.of(ConfigManager.HOUSES_FILE, ConfigManager.GATE_FILE, ConfigManager.STAGES_FILE))
+            Files.copy(templates.resolve(file), dir.resolve(file));
+
+        ConfigManager.load(dir);
+
+        assertEquals(List.of(), ConfigManager.getLastErrors());
+        assertEquals(3, ConfigManager.getHouses().size());
+        assertEquals("minecraft:ui.toast.challenge_complete", ConfigManager.getGate().completionSound());
+        assertEquals(List.of("novice_tier", "apprentice_tier", "master_tier"),
+                ConfigManager.getStages().stream().map(StageConfig::id).toList());
+        assertNull(ConfigManager.getStages().get(0).requiresQuest());
+        assertEquals("quest_apprentice_trial", ConfigManager.getStages().get(1).requiresQuest());
+        assertEquals("quest_master_trial", ConfigManager.getStages().get(2).requiresQuest());
+    }
 }
